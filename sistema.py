@@ -3,6 +3,9 @@ from endereco import Endereco
 from verificador import *
 from tkinter import messagebox
 from banco import Banco
+from banco import N_PRESTADORES
+
+N_COLUNAS_CONSULTA = 12
 
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
@@ -13,7 +16,7 @@ class Aplicativo(ctk.CTk):
     def __init__(self, title: str):
         super().__init__()
         self.banco = Banco()
-        self.geometry("700x700")
+        self.geometry("1400x900")
         self.title(title)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
@@ -63,6 +66,11 @@ class Aplicativo(ctk.CTk):
         self.campo_contato = self._GerarCampoCadastro("Número para contato",
                                                     "Digite o número para contato com DDD",
                                                     self.aba_esq)
+
+        self.delete_button = ctk.CTkButton(self.aba_esq, text="Deletar")
+        self.delete_button.pack(pady=(default_spacing, default_spacing))
+        self.update_button = ctk.CTkButton(self.aba_esq, text="Atualizar")
+        self.update_button.pack(pady=(default_spacing, default_spacing))
         self.campo_logradouro = self._GerarCampoCadastro("Logradouro",
                                                          "Digite a Rua",
                                                          self.aba_dir)
@@ -87,14 +95,63 @@ class Aplicativo(ctk.CTk):
 
         self.campo_cep.bind("<Return>", lambda event: self._ConsultarCEP(event, self.campo_cep.get()))
 
+
+    def AtualizarConsulta(self, event, pesquisa):
+        if pesquisa != "":
+            self.respostaBD = self.banco.PesquisarNPrestadores(pesquisa)
+        else:
+            self.respostaBD = self.banco.GetNPrestadores()
+        for i in range(N_PRESTADORES):
+            for j in range(N_COLUNAS_CONSULTA):
+                if i < len(self.respostaBD):
+                    self.consulta_labels[i][j].configure(text=self.respostaBD[i][j + 1])
+                else:
+                    self.consulta_labels[i][j].configure(text="")
+
     def ConstrAbaConsulta(self):
         self.aba_consulta = self.janela_abas.tab("Consulta")
-        label = ctk.CTkLabel(self.aba_consulta, text="Consulta de Prestador", font=('Arial', 20))
+        self.aba_consulta.grid_columnconfigure(0, weight=1)
+        self.aba_consulta.grid_rowconfigure(1, weight=1)
+        self.superior_consulta = ctk.CTkFrame(self.aba_consulta)
+        self.superior_consulta.grid(row=0, column=0, sticky="nsew")
+        self.inferior_consulta = ctk.CTkFrame(self.aba_consulta)
+        self.inferior_consulta.grid(row=1, column=0, sticky="nsew")
+        label = ctk.CTkLabel(self.superior_consulta, text="Consulta de Prestador", font=('Arial', 20))
         label.pack(pady=(default_spacing, default_spacing))
-        self.pesquisa = ctk.CTkEntry(self.aba_consulta,
-                                     placeholder_text="Pesquise por um prestador",
+        self.pesquisa = ctk.CTkEntry(self.superior_consulta,
+                                     placeholder_text="Pesquise pelo nome de um prestador",
                                      width=default_txtbar_size)
         self.pesquisa.pack(pady=(default_spacing,default_spacing))
+        self.pesquisa.bind("<Return>", lambda event: self.AtualizarConsulta(event, self.pesquisa.get()))
+
+        for i in range(N_PRESTADORES + 1):
+            self.inferior_consulta.grid_rowconfigure(i, weight=1)
+        for i in range(N_COLUNAS_CONSULTA):
+            self.inferior_consulta.grid_columnconfigure(i, weight=1)
+        
+        self.grid_consulta = [[None for _ in range(N_COLUNAS_CONSULTA)] for _ in range(N_PRESTADORES)]
+        self.consulta_labels = [[None for _ in range(N_COLUNAS_CONSULTA)] for _ in range(N_PRESTADORES)]
+
+        first_row_labels = ["cadastro","nome","cpf ou cnpj","nascimento","cep","contato","logradouro","numero","complemento","bairro","cidade","uf"]
+        for j in range(N_COLUNAS_CONSULTA):
+            frame_first_row = ctk.CTkFrame(self.inferior_consulta,fg_color="#124161",border_width=5,corner_radius=0)
+            frame_first_row.grid(row=0, column=j, sticky="nsew")
+            first_row_label = ctk.CTkLabel(frame_first_row, text=first_row_labels[j])
+            first_row_label.pack(expand=True)
+        for i in range(N_PRESTADORES):
+            for j in range(N_COLUNAS_CONSULTA):
+                self.grid_consulta[i][j] = ctk.CTkFrame(self.inferior_consulta, corner_radius=0)
+                self.grid_consulta[i][j].grid(row=i + 1, column=j, sticky="nsew")
+                self.consulta_labels[i][j] = ctk.CTkLabel(self.grid_consulta[i][j], text=None)
+                self.consulta_labels[i][j].pack(expand=True)
+
+        self.respostaBD = self.banco.GetNPrestadores()
+        for i in range(N_PRESTADORES):
+            for j in range(N_COLUNAS_CONSULTA):
+                if i < len(self.respostaBD):
+                    self.consulta_labels[i][j].configure(text=self.respostaBD[i][j + 1])
+
+
 
 
     def _ConsultarCEP(self, event, cep):
@@ -178,6 +235,7 @@ class Aplicativo(ctk.CTk):
             cidade,
             uf)
         error = self.banco.InsertPrestador(parametros)
+        self.AtualizarConsulta(None, "")
         if error != None:
             messagebox.showerror("Error", f"Error {error}")
         else:
