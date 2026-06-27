@@ -1,5 +1,6 @@
 import sqlite3
 
+N_PRESTADORES = 8
 
 class Banco():
     def __init__(self):
@@ -36,3 +37,17 @@ class Banco():
             return None
         except Exception as e:
             return e
+    
+    def GetNPrestadores(self):
+        sql = '''select * from prestadores'''
+        self.cursor.execute(sql)
+        resp = self.cursor.fetchmany(N_PRESTADORES)
+        self.conexao.commit()
+        return resp
+    
+    def PesquisarNPrestadores(self, pesquisa):
+        sql = f'''select * from prestadores where nome like '%{pesquisa}%' '''
+        self.cursor.execute(sql)
+        resp = self.cursor.fetchmany(N_PRESTADORES)
+        self.conexao.commit()
+        return resp
