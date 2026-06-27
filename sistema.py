@@ -38,6 +38,57 @@ class Aplicativo(ctk.CTk):
         campo.pack(pady = (0,default_spacing))
         return campo
 
+    def AtualizarInfo(self):
+        try:
+            resp = self.banco.GetPrestadorCPF_CNPJ(int(self.campo_CPF_CNPJ.get()))
+            if resp == False:
+                messagebox.showerror("CPF ou CNPJ não encontrado", "Não encontramos o prestador.")
+                return
+            if self.campo_id.get() == "":
+                self.campo_id.set(resp[0][1])
+            if self.campo_nome.get() == "":
+                self.campo_nome.set(resp[0][2])
+            if self.campo_CPF_CNPJ.get() == "":
+                self.campo_CPF_CNPJ.set(resp[0][3])
+            if self.campo_nscmnt.get() == "":
+                self.campo_nscmnt.set(datetime.datetime.strptime(resp[0][4], "datetime('%Y-%m-%d %H:%M:%S')").strftime('%d/%m/%Y'))
+            if self.campo_cep.get() == "":
+                self.campo_cep.set(resp[0][5])
+            if self.campo_contato.get() == "":
+                self.campo_contato.set(resp[0][6])
+            if self.campo_logradouro.get() == "":
+                if resp[0][7] != None:
+                    self.campo_logradouro.set(resp[0][7])
+            if self.campo_numero.get() == "":
+                if resp[0][8] != None:
+                    self.campo_numero.set(resp[0][8])
+            if self.campo_complemento.get() == "":
+                if resp[0][9] != None:
+                    self.campo_complemento.set(resp[0][9])
+            if self.campo_bairro.get() == "":
+                if resp[0][10] != None:
+                    self.campo_bairro.set(resp[0][10])
+            if self.campo_cidade.get() == "":
+                if resp[0][11] != None:
+                    self.campo_cidade.set(resp[0][11])
+            if self.campo_uf.get() == "":
+                if resp[0][12] != None:
+                    self.campo_uf.set(resp[0][12])
+            self.banco.DeletePrestadorCPF_CNPJ(int(self.campo_CPF_CNPJ.get()))
+            self._Cadastrar()
+        except:
+            messagebox.showerror("Falha ao Atualizar","Não foi possível atualizar o elemento. Verifique o preenchimento do campo.")
+
+    def Delete(self):
+        try:
+            if self.banco.DeletePrestadorCPF_CNPJ(int(self.campo_CPF_CNPJ.get())) == False:
+                messagebox.showerror("CPF ou CNPJ não encontrado", "Não encontramos o prestador.")
+                return
+            self.AtualizarConsulta(None, "")
+            messagebox.showinfo("Removido","O prestador foi removido da nossa Base de Dados com sucesso!")
+        except:
+            messagebox.showerror("Falha ao Deletar","Não foi possível deletar o elemento. Verifique o preenchimento do campo.")
+    
 
     def ConstrAbaCadastro(self):
         self.aba_cadastro = self.janela_abas.tab("Cadastro")
@@ -67,10 +118,11 @@ class Aplicativo(ctk.CTk):
                                                     "Digite o número para contato com DDD",
                                                     self.aba_esq)
 
-        self.delete_button = ctk.CTkButton(self.aba_esq, text="Deletar")
+        self.delete_button = ctk.CTkButton(self.aba_esq, text="Deletar", command=self.Delete)
         self.delete_button.pack(pady=(default_spacing, default_spacing))
-        self.update_button = ctk.CTkButton(self.aba_esq, text="Atualizar")
+        self.update_button = ctk.CTkButton(self.aba_esq, text="Atualizar", command=self.AtualizarInfo)
         self.update_button.pack(pady=(default_spacing, default_spacing))
+
         self.campo_logradouro = self._GerarCampoCadastro("Logradouro",
                                                          "Digite a Rua",
                                                          self.aba_dir)
