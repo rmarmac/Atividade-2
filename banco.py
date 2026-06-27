@@ -51,3 +51,20 @@ class Banco():
         resp = self.cursor.fetchmany(N_PRESTADORES)
         self.conexao.commit()
         return resp
+    
+    def GetPrestadorCPF_CNPJ(self, cpf_ou_cnpj):
+        sql = f'''select * from prestadores where cpf_cnpj = {cpf_ou_cnpj}'''
+        self.cursor.execute(sql)
+        resp = self.cursor.fetchall()
+        self.conexao.commit()
+        if len(resp) == 0:
+            return False
+        return resp
+    
+    def DeletePrestadorCPF_CNPJ(self, cpf_ou_cnpj):
+        if not self.GetPrestadorCPF_CNPJ(cpf_ou_cnpj):
+            return False
+        sql = f'''delete from prestadores where cpf_cnpj = {cpf_ou_cnpj}'''
+        self.cursor.execute(sql)
+        self.conexao.commit()
+        return True
